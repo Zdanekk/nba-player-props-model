@@ -33,24 +33,27 @@ TARGET_COLUMN = "PTS"
 def load_data(path: str) -> pd.DataFrame:
     df = pd.read_csv(path)
     df["GAME_DATE"] = pd.to_datetime(df["GAME_DATE"])
+    df = df.sort_values("GAME_DATE").reset_index(drop=True)
     return df
 
 
-def split_data(df: pd.DataFrame):
-    X = df[FEATURE_COLUMNS]
-    y = df[TARGET_COLUMN]
+def split_data_by_date(df: pd.DataFrame, train_ratio: float = 0.8):
+    """
+    Split dataset by date instead of row index.
+    Older games go to train set, newer games go to test set.
+    """
+    split_date = df["GAME_DATE"].quantile(train_ratio)
 
-    split_index = int(len(df) * 0.8)
+    train_df = df[df["GAME_DATE"] <= split_date].copy()
+    test_df = df[df["GAME_DATE"] > split_date].copy()
 
-    X_train = X.iloc[:split_index]
-    X_test = X.iloc[split_index:]
+    X_train = train_df[FEATURE_COLUMNS]
+    y_train = train_df[TARGET_COLUMN]
 
-    y_train = y.iloc[:split_index]
-    y_test = y.iloc[split_index:]
+    X_test = test_df[FEATURE_COLUMNS]
+    y_test = test_df[TARGET_COLUMN]
 
-    df_test = df.iloc[split_index:].copy()
-
-    return X_train, X_test, y_train, y_test, df_test
+    return X_train, X_test, y_train, y_test, test_df, split_date
 
 
 def evaluate_model(model_name: str, y_true, y_pred):
@@ -68,7 +71,13 @@ def evaluate_model(model_name: str, y_true, y_pred):
 
 def train_and_save_models(data_path: str):
     df = load_data(data_path)
-    X_train, X_test, y_train, y_test, df_test = split_data(df)
+
+    X_train, X_test, y_train, y_test, df_test, split_date = split_data_by_date(df)
+
+    print(f"Train max date: {df[df['GAME_DATE'] <= split_date]['GAME_DATE'].max().date()}")
+    print(f"Test min date:  {df[df['GAME_DATE'] > split_date]['GAME_DATE'].min().date()}")
+    print(f"Train size: {len(X_train)}")
+    print(f"Test size: {len(X_test)}")
 
     results = []
 
@@ -108,7 +117,9 @@ def train_and_save_models(data_path: str):
 
     prediction_df.to_csv("models/test_predictions.csv", index=False)
 
-    print(results_df)
+    print("\nModel results:")
+    print(results_df.sort_values("mae"))
+
     print("\nSaved:")
     print("- models/model_results.csv")
     print("- models/test_predictions.csv")
