@@ -23,7 +23,7 @@ FEATURE_COLUMNS = [
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 MODEL_PATH = BASE_DIR / "models" / "random_forest.pkl"
-DATA_PATH = BASE_DIR / "data" / "processed" / "lebron_model_dataset.csv"
+DATA_PATH = BASE_DIR / "data" / "processed" / "nba_players_model_dataset.csv"
 
 
 @st.cache_resource
@@ -32,16 +32,29 @@ def load_model():
         return pickle.load(f)
 
 
-st.title("NBA Player Props Prediction")
-st.subheader("LeBron James - Points Prediction")
+@st.cache_data
+def load_data():
+    df = pd.read_csv(DATA_PATH)
+    df["GAME_DATE"] = pd.to_datetime(df["GAME_DATE"])
+    return df
 
-df = pd.read_csv(DATA_PATH)
+
+st.title("NBA Player Props Prediction")
+st.subheader("Full League MVP")
+
+df = load_data()
 model = load_model()
 
-line = st.number_input("Points line", value=26.5, step=0.5)
+players = sorted(df["PLAYER_NAME"].unique())
+selected_player = st.selectbox("Select player", players)
 
-last_row = df.iloc[[-1]][FEATURE_COLUMNS].copy()
-prediction = model.predict(last_row)[0]
+default_line = 20.5
+line = st.number_input("Points line", value=default_line, step=0.5)
+
+player_df = df[df["PLAYER_NAME"] == selected_player].sort_values("GAME_DATE")
+
+last_row_features = player_df.iloc[[-1]][FEATURE_COLUMNS].copy()
+prediction = model.predict(last_row_features)[0]
 
 st.metric("Predicted points", round(prediction, 2))
 
@@ -50,5 +63,6 @@ if prediction > line:
 else:
     st.error(f"Model suggests UNDER {line}")
 
-st.write("Latest input features used for prediction:")
-st.dataframe(last_row)
+st.write("Latest player game context used for prediction:")
+preview_cols = ["PLAYER_NAME", "GAME_DATE", "MATCHUP", "PTS"] + FEATURE_COLUMNS
+st.dataframe(player_df[preview_cols].tail(5).sort_values("GAME_DATE", ascending=False))

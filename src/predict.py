@@ -26,21 +26,38 @@ def load_model():
     return model
 
 
-def predict_next_game(data_path: str, line: float = 26.5):
-    df = pd.read_csv(data_path)
+def load_dataset():
+    return pd.read_csv("data/processed/nba_players_model_dataset.csv")
 
-    last_row = df.iloc[[-1]][FEATURE_COLUMNS].copy()
+
+def predict_for_player(player_name: str, line: float = 20.5):
+    df = load_dataset()
+
+    player_df = df[df["PLAYER_NAME"] == player_name].copy()
+
+    if player_df.empty:
+        raise ValueError(f"No data found for player: {player_name}")
+
+    player_df = player_df.sort_values("GAME_DATE")
+    last_row = player_df.iloc[[-1]][FEATURE_COLUMNS].copy()
 
     model = load_model()
     prediction = model.predict(last_row)[0]
 
     decision = "OVER" if prediction > line else "UNDER"
 
-    return prediction, decision
+    return {
+        "player_name": player_name,
+        "predicted_points": round(prediction, 2),
+        "line": line,
+        "decision": decision
+    }
 
 
 if __name__ == "__main__":
-    pred, decision = predict_next_game("data/processed/lebron_model_dataset.csv", line=26.5)
+    result = predict_for_player("Alex Caruso", line=26.5)
 
-    print("Predicted points for next game:", round(pred, 2))
-    print("Model suggests:", decision)
+    print("Player:", result["player_name"])
+    print("Predicted points:", result["predicted_points"])
+    print("Line:", result["line"])
+    print("Model suggests:", result["decision"])

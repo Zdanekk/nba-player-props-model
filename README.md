@@ -8,7 +8,7 @@ Machine learning project for predicting NBA player scoring relative to market li
 
 This project analyzes NBA player performance and predicts the number of points a player is likely to score in the next game. The prediction can then be compared with a market line (for example: **26.5 points**) to generate an **over/under suggestion**.
 
-The current **MVP version** focuses on **LeBron James** and uses historical game logs from the NBA API.
+The current **MVP version** supports multiple **NBA players** and uses historical game logs from the NBA API.
 
 ---
 

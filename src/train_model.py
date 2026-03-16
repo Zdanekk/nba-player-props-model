@@ -96,4 +96,4 @@ def train_and_save_models(data_path: str):
 
 
 if __name__ == "__main__":
-    train_and_save_models("data/processed/lebron_model_dataset.csv")
+    train_and_save_models("data/processed/nba_players_model_dataset.csv")
