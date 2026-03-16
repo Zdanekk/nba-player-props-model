@@ -22,13 +22,18 @@ FEATURE_COLUMNS = [
     "reb_last5",
     "ast_last5",
     "pts_std_last5",
+    "pts_trend",
+    "min_trend",
+    "fga_trend",
 ]
 
 TARGET_COLUMN = "PTS"
 
 
 def load_data(path: str) -> pd.DataFrame:
-    return pd.read_csv(path)
+    df = pd.read_csv(path)
+    df["GAME_DATE"] = pd.to_datetime(df["GAME_DATE"])
+    return df
 
 
 def split_data(df: pd.DataFrame):
@@ -43,7 +48,9 @@ def split_data(df: pd.DataFrame):
     y_train = y.iloc[:split_index]
     y_test = y.iloc[split_index:]
 
-    return X_train, X_test, y_train, y_test
+    df_test = df.iloc[split_index:].copy()
+
+    return X_train, X_test, y_train, y_test, df_test
 
 
 def evaluate_model(model_name: str, y_true, y_pred):
@@ -61,7 +68,7 @@ def evaluate_model(model_name: str, y_true, y_pred):
 
 def train_and_save_models(data_path: str):
     df = load_data(data_path)
-    X_train, X_test, y_train, y_test = split_data(df)
+    X_train, X_test, y_train, y_test, df_test = split_data(df)
 
     results = []
 
@@ -91,8 +98,22 @@ def train_and_save_models(data_path: str):
     results_df = pd.DataFrame(results)
     results_df.to_csv("models/model_results.csv", index=False)
 
+    prediction_df = df_test[["PLAYER_NAME", "GAME_DATE", "MATCHUP", "PTS"]].copy()
+    prediction_df["baseline_pred"] = baseline_pred.values
+    prediction_df["lr_pred"] = lr_pred
+    prediction_df["rf_pred"] = rf_pred
+    prediction_df["baseline_error"] = prediction_df["PTS"] - prediction_df["baseline_pred"]
+    prediction_df["lr_error"] = prediction_df["PTS"] - prediction_df["lr_pred"]
+    prediction_df["rf_error"] = prediction_df["PTS"] - prediction_df["rf_pred"]
+
+    prediction_df.to_csv("models/test_predictions.csv", index=False)
+
     print(results_df)
-    print("\nModels saved to /models")
+    print("\nSaved:")
+    print("- models/model_results.csv")
+    print("- models/test_predictions.csv")
+    print("- models/linear_regression.pkl")
+    print("- models/random_forest.pkl")
 
 
 if __name__ == "__main__":

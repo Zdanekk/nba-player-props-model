@@ -17,6 +17,9 @@ FEATURE_COLUMNS = [
     "reb_last5",
     "ast_last5",
     "pts_std_last5",
+    "pts_trend",
+    "min_trend",
+    "fga_trend",
 ]
 
 

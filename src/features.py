@@ -2,6 +2,9 @@ import pandas as pd
 
 
 def add_basic_features(df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Add rolling, contextual, and trend-based features for NBA player points prediction.
+    """
     df = df.copy()
     df["GAME_DATE"] = pd.to_datetime(df["GAME_DATE"])
 
@@ -37,6 +40,10 @@ def add_basic_features(df: pd.DataFrame) -> pd.DataFrame:
 
     df["pts_std_last5"] = grouped["PTS"].transform(lambda s: s.shift(1).rolling(5).std())
 
+    df["pts_trend"] = df["pts_last5"] - df["pts_last10"]
+    df["min_trend"] = df["min_last3"] - df["min_last5"]
+    df["fga_trend"] = df["fga_last3"] - df["fga_last5"]
+
     df["days_rest"] = grouped["GAME_DATE"].diff().dt.days
     df["days_rest"] = df["days_rest"].fillna(3)
 
@@ -44,6 +51,9 @@ def add_basic_features(df: pd.DataFrame) -> pd.DataFrame:
 
 
 def prepare_model_dataset(df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Prepare final modeling dataset with selected features.
+    """
     df = add_basic_features(df)
 
     feature_columns = [
@@ -61,6 +71,9 @@ def prepare_model_dataset(df: pd.DataFrame) -> pd.DataFrame:
         "reb_last5",
         "ast_last5",
         "pts_std_last5",
+        "pts_trend",
+        "min_trend",
+        "fga_trend",
     ]
 
     keep_columns = [
@@ -68,7 +81,7 @@ def prepare_model_dataset(df: pd.DataFrame) -> pd.DataFrame:
         "PLAYER_ID",
         "GAME_DATE",
         "MATCHUP",
-        "PTS"
+        "PTS",
     ] + feature_columns
 
     model_df = df[keep_columns].copy()
