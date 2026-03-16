@@ -1,6 +1,6 @@
 # NBA Player Props Prediction System
 
-Machine learning project for predicting NBA player scoring relative to market lines using historical game data, feature engineering, and model comparison.
+A machine learning project that predicts NBA player scoring and evaluates over/under decisions using historical game data and feature engineering.
 
 ---
 
@@ -52,7 +52,6 @@ nba-player-props-model
 │
 ├── src
 │   ├── data_loader.py
-│   ├── features.py
 │   ├── train_model.py
 │   ├── predict.py
 │   └── evaluation.py
@@ -85,6 +84,36 @@ The current version uses:
 ### Target
 
 - Player **points scored in a game**
+
+---
+
+## Model Evaluation
+
+Models are evaluated using a **time-based train/test split**, ensuring that training uses historical games while testing uses more recent games.
+
+Evaluation metrics include:
+
+- **MAE (Mean Absolute Error)**
+- **RMSE (Root Mean Squared Error)**
+- **R² score**
+
+The best performing models achieved approximately:
+
+- MAE ≈ **4.8 points**
+- RMSE ≈ **6.3 points**
+
+### Over / Under Backtest
+
+To evaluate the model from a decision-making perspective, a simple backtest was implemented.
+
+A simulated line was created using the player's recent scoring average (`pts_last10`).  
+Predictions were compared against this line to generate **OVER / UNDER decisions**.
+
+Backtest result:
+
+**≈ 54% prediction accuracy**
+
+While this is only a proxy for real bookmaker lines, it demonstrates that the model captures meaningful signals in player performance trends.
 
 ---
 
@@ -150,14 +179,25 @@ python -m streamlit run app/streamlit_app.py
 
 ---
 
+## Example Workflow
+
+1. Collect NBA player game logs from the NBA API
+2. Generate rolling and trend-based features
+3. Train regression models to predict player points
+4. Evaluate models using a time-based split
+5. Compare predictions against a simulated scoring line
+6. Generate over/under suggestions
 ## Future Improvements
 
-- Support for **multiple NBA players**
-- **Full-league dataset**
-- **Bookmaker market line integration**
-- Additional features such as **opponent defensive strength**
-- **XGBoost / LightGBM models**
-- Better **evaluation and backtesting**
+---
+
+Planned improvements for future iterations:
+
+- Integration with **real bookmaker market lines via API**
+- Additional contextual features (opponent defensive rating, team pace)
+- Advanced models such as **XGBoost or LightGBM**
+- Automated daily predictions for upcoming games
+- Improved decision metrics and backtesting
 - Deployment as a **public web application**
 
 ---
